@@ -1,19 +1,25 @@
 
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import ChartsDashboard from "../components/ChartsDashboard";
 import LogTable from "../components/LogTable";
 import InsightsPanel from "../components/InsightsPanel";
 import FilterPanel from "../components/FilterPanel";
 import ReportDownloadButton from "../components/ReportDownloadButton";
 import { useState } from "react";
+import { useLogContext } from "../contexts/LogContext";
 
 const AnalyzePage = () => {
+  const { uploadedFileName, logAnalysis } = useLogContext();
   const [filters, setFilters] = useState({
     dateRange: { start: "", end: "" },
     logLevel: "",
     keyword: ""
   });
+
+  const fileSize = logAnalysis ? 
+    `${(logAnalysis.totalEntries * 100 / 1024).toFixed(1)} KB` : 
+    '0 KB';
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -26,7 +32,9 @@ const AnalyzePage = () => {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-blue-400">Log Analysis</h1>
-              <p className="text-slate-300 text-sm">server.log (2.3 MB, 15,432 entries)</p>
+              <p className="text-slate-300 text-sm">
+                {uploadedFileName || 'No file'} ({fileSize}, {logAnalysis?.totalEntries.toLocaleString() || 0} entries)
+              </p>
             </div>
           </div>
           <ReportDownloadButton />

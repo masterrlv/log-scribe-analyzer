@@ -1,15 +1,19 @@
 
 import { useState, useRef } from "react";
 import { Upload, FileText, Loader2 } from "lucide-react";
+import { logParser } from "../services/logParser";
+import { useLogContext } from "../contexts/LogContext";
 
 interface FileUploaderProps {
   onFileUpload: (file: File) => void;
   isProcessing: boolean;
+  setIsProcessing: (processing: boolean) => void;
 }
 
-const FileUploader = ({ onFileUpload, isProcessing }: FileUploaderProps) => {
+const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploaderProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setLogData } = useLogContext();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -31,7 +35,7 @@ const FileUploader = ({ onFileUpload, isProcessing }: FileUploaderProps) => {
     }
   };
 
-  const handleFileSelection = (file: File) => {
+  const handleFileSelection = async (file: File) => {
     // Validate file type
     const validTypes = ['.log', '.txt'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -47,7 +51,33 @@ const FileUploader = ({ onFileUpload, isProcessing }: FileUploaderProps) => {
       return;
     }
 
-    onFileUpload(file);
+    setIsProcessing(true);
+    
+    try {
+      // Read file content
+      const content = await file.text();
+      console.log('File content length:', content.length);
+      
+      // Parse the log file
+      const logEntries = logParser.parseLogFile(content);
+      console.log('Parsed log entries:', logEntries.length);
+      
+      // Analyze the log entries
+      const analysis = logParser.analyzeLogEntries(logEntries);
+      console.log('Log analysis:', analysis);
+      
+      // Store in context
+      setLogData(logEntries, analysis, file.name);
+      
+      // Notify parent component
+      onFileUpload(file);
+      
+    } catch (error) {
+      console.error('Error processing file:', error);
+      alert('Error processing the log file. Please check the file format.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

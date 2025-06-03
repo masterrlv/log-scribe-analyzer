@@ -1,50 +1,30 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { useLogContext } from '../contexts/LogContext';
 
 const ChartsDashboard = () => {
-  // Mock data for charts
-  const logLevelData = [
-    { name: 'ERROR', value: 234, color: '#ef4444' },
-    { name: 'WARN', value: 567, color: '#f59e0b' },
-    { name: 'INFO', value: 1234, color: '#3b82f6' },
-    { name: 'DEBUG', value: 892, color: '#6b7280' }
-  ];
+  const { logAnalysis } = useLogContext();
 
-  const timelineData = [
-    { time: '00:00', errors: 5, warnings: 12 },
-    { time: '04:00', errors: 3, warnings: 8 },
-    { time: '08:00', errors: 15, warnings: 25 },
-    { time: '12:00', errors: 22, warnings: 35 },
-    { time: '16:00', errors: 18, warnings: 28 },
-    { time: '20:00', errors: 8, warnings: 15 }
-  ];
+  // Use real data if available, otherwise show empty state
+  if (!logAnalysis) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <p className="text-slate-400">Upload a log file to see analysis charts</p>
+        </div>
+      </div>
+    );
+  }
 
-  const hourlyDistribution = [
-    { hour: '0', count: 45 },
-    { hour: '1', count: 32 },
-    { hour: '2', count: 28 },
-    { hour: '3', count: 35 },
-    { hour: '4', count: 42 },
-    { hour: '5', count: 55 },
-    { hour: '6', count: 78 },
-    { hour: '7', count: 95 },
-    { hour: '8', count: 125 },
-    { hour: '9', count: 145 },
-    { hour: '10', count: 132 },
-    { hour: '11', count: 128 },
-    { hour: '12', count: 155 },
-    { hour: '13', count: 142 },
-    { hour: '14', count: 138 },
-    { hour: '15', count: 125 },
-    { hour: '16', count: 115 },
-    { hour: '17', count: 98 },
-    { hour: '18', count: 85 },
-    { hour: '19', count: 72 },
-    { hour: '20', count: 65 },
-    { hour: '21', count: 55 },
-    { hour: '22', count: 48 },
-    { hour: '23', count: 38 }
-  ];
+  const { 
+    totalEntries, 
+    errorCount, 
+    warningCount, 
+    errorRate, 
+    timelineData, 
+    hourlyDistribution, 
+    logLevelData 
+  } = logAnalysis;
 
   return (
     <div className="space-y-6">
@@ -52,19 +32,19 @@ const ChartsDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
           <h3 className="text-sm text-slate-400 mb-1">Total Entries</h3>
-          <p className="text-2xl font-bold text-white">15,432</p>
+          <p className="text-2xl font-bold text-white">{totalEntries.toLocaleString()}</p>
         </div>
         <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
           <h3 className="text-sm text-slate-400 mb-1">Errors</h3>
-          <p className="text-2xl font-bold text-red-400">234</p>
+          <p className="text-2xl font-bold text-red-400">{errorCount.toLocaleString()}</p>
         </div>
         <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
           <h3 className="text-sm text-slate-400 mb-1">Warnings</h3>
-          <p className="text-2xl font-bold text-yellow-400">567</p>
+          <p className="text-2xl font-bold text-yellow-400">{warningCount.toLocaleString()}</p>
         </div>
         <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
           <h3 className="text-sm text-slate-400 mb-1">Error Rate</h3>
-          <p className="text-2xl font-bold text-blue-400">1.52%</p>
+          <p className="text-2xl font-bold text-blue-400">{errorRate.toFixed(2)}%</p>
         </div>
       </div>
 
@@ -76,7 +56,7 @@ const ChartsDashboard = () => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={logLevelData}
+                data={logLevelData.filter(item => item.value > 0)}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}

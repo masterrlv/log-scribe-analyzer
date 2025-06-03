@@ -1,45 +1,35 @@
 
 import { AlertTriangle, TrendingUp, Clock, Zap } from "lucide-react";
+import { useLogContext } from "../contexts/LogContext";
 
 const InsightsPanel = () => {
-  const insights = [
-    {
-      id: 1,
-      type: 'error',
-      icon: AlertTriangle,
-      title: 'Database Connection Issues',
-      description: 'Detected 15 database timeout errors in the last hour. Consider increasing connection pool size.',
-      severity: 'high',
-      timestamp: '2 minutes ago'
-    },
-    {
-      id: 2,
-      type: 'performance',
-      icon: TrendingUp,
-      title: 'Response Time Spike',
-      description: 'API response times increased by 340% during peak hours (12-2 PM).',
-      severity: 'medium',
-      timestamp: '15 minutes ago'
-    },
-    {
-      id: 3,
-      type: 'pattern',
-      icon: Clock,
-      title: 'Recurring Error Pattern',
-      description: 'JWT validation errors spike every 24 hours, suggesting token refresh issues.',
-      severity: 'medium',
-      timestamp: '1 hour ago'
-    },
-    {
-      id: 4,
-      type: 'optimization',
-      icon: Zap,
-      title: 'Memory Usage Optimization',
-      description: 'Memory usage consistently high (>85%). Consider implementing garbage collection tuning.',
-      severity: 'low',
-      timestamp: '2 hours ago'
+  const { logAnalysis } = useLogContext();
+
+  if (!logAnalysis || !logAnalysis.insights.length) {
+    return (
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold">AI Insights</h3>
+          <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded">
+            Live Analysis
+          </span>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-slate-400">Upload a log file to generate insights</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'AlertTriangle': return AlertTriangle;
+      case 'TrendingUp': return TrendingUp;
+      case 'Clock': return Clock;
+      case 'Zap': return Zap;
+      default: return AlertTriangle;
     }
-  ];
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -69,8 +59,8 @@ const InsightsPanel = () => {
       </div>
 
       <div className="space-y-4">
-        {insights.map((insight) => {
-          const Icon = insight.icon;
+        {logAnalysis.insights.map((insight) => {
+          const Icon = getIcon(insight.icon);
           return (
             <div 
               key={insight.id} 
