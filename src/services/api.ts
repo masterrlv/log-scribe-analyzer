@@ -64,6 +64,8 @@ class ApiService {
   }
 
   async login(username: string, password: string): Promise<{ access_token: string; token_type: string }> {
+    console.log('Attempting login to:', `${API_BASE_URL}/auth/login`);
+    
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
@@ -73,7 +75,11 @@ class ApiService {
       body: formData,
     });
 
+    console.log('Login response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Login error:', errorText);
       throw new Error('Login failed');
     }
 
