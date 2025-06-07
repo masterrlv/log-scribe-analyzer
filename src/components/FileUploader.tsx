@@ -1,6 +1,7 @@
 
 import { useState, useRef } from "react";
 import { Upload, FileText, Loader2 } from "lucide-react";
+import { logParser } from "../services/logParser";
 import { useLogContext } from "../contexts/LogContext";
 
 interface FileUploaderProps {
@@ -12,7 +13,7 @@ interface FileUploaderProps {
 const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploaderProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadLog } = useLogContext();
+  const { setLogData } = useLogContext();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,11 +37,11 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
 
   const handleFileSelection = async (file: File) => {
     // Validate file type
-    const validTypes = ['.log', '.txt', '.json'];
+    const validTypes = ['.log', '.txt'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (!validTypes.includes(fileExtension)) {
-      alert('Please upload a .log, .txt, or .json file');
+      alert('Please upload a .log or .txt file');
       return;
     }
 
@@ -53,11 +54,27 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
     setIsProcessing(true);
     
     try {
-      await uploadLog(file);
+      // Read file content
+      const content = await file.text();
+      console.log('File content length:', content.length);
+      
+      // Parse the log file
+      const logEntries = logParser.parseLogFile(content);
+      console.log('Parsed log entries:', logEntries.length);
+      
+      // Analyze the log entries
+      const analysis = logParser.analyzeLogEntries(logEntries);
+      console.log('Log analysis:', analysis);
+      
+      // Store in context
+      setLogData(logEntries, analysis, file.name);
+      
+      // Notify parent component
       onFileUpload(file);
+      
     } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('Error uploading the log file. Please try again.');
+      console.error('Error processing file:', error);
+      alert('Error processing the log file. Please check the file format.');
     } finally {
       setIsProcessing(false);
     }
@@ -75,7 +92,7 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
       <div className="text-center py-12">
         <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
         <h3 className="text-xl font-semibold mb-2">Processing Log File</h3>
-        <p className="text-slate-400">Uploading and parsing entries...</p>
+        <p className="text-slate-400">Parsing entries and extracting insights...</p>
       </div>
     );
   }
@@ -97,7 +114,7 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
       <input
         ref={fileInputRef}
         type="file"
-        accept=".log,.txt,.json"
+        accept=".log,.txt"
         onChange={handleFileInputChange}
         className="hidden"
       />
@@ -110,12 +127,12 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
         <div>
           <h3 className="text-xl font-semibold mb-2">Upload Your Log File</h3>
           <p className="text-slate-400 mb-4">
-            Drag and drop your .log, .txt, or .json file here, or click to browse
+            Drag and drop your .log or .txt file here, or click to browse
           </p>
           
           <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
             <FileText className="w-4 h-4" />
-            Supports .log, .txt, .json files up to 50MB
+            Supports .log, .txt files up to 50MB
           </div>
         </div>
         

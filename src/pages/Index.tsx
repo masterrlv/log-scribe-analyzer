@@ -1,31 +1,15 @@
 
 import { Link } from "react-router-dom";
-import { Upload, BarChart3, FileText, LogOut } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { Upload, BarChart3, FileText } from "lucide-react";
 
 const Index = () => {
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
       <header className="bg-slate-800 border-b border-slate-700">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-blue-400">Log Analyzer</h1>
-            <p className="text-slate-300 mt-1">Intelligent server log analysis and insights</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
+        <div className="container mx-auto px-6 py-4">
+          <h1 className="text-2xl font-bold text-blue-400">Log Analyzer</h1>
+          <p className="text-slate-300 mt-1">Intelligent server log analysis and insights</p>
         </div>
       </header>
 
@@ -85,7 +69,7 @@ const Index = () => {
             className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 border border-slate-600"
           >
             <BarChart3 className="w-5 h-5" />
-            View Analysis
+            View Demo Analysis
           </Link>
         </div>
       </main>
