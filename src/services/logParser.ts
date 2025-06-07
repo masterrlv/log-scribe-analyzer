@@ -1,4 +1,3 @@
-
 export interface LogEntry {
   id: string;
   timestamp: string;
@@ -19,6 +18,20 @@ export interface LogAnalysis {
   infoCount: number;
   debugCount: number;
   errorRate: number;
+  timeRange: {
+    start: string;
+    end: string;
+  };
+  topErrors: Array<{
+    message: string;
+    count: number;
+  }>;
+  timeSeriesData: Array<{
+    timestamp: string;
+    errorCount: number;
+    warningCount: number;
+    infoCount: number;
+  }>;
   timelineData: Array<{ time: string; errors: number; warnings: number }>;
   hourlyDistribution: Array<{ hour: string; count: number }>;
   logLevelData: Array<{ name: string; value: number; color: string }>;
@@ -237,6 +250,25 @@ class LogParser {
     const debugCount = entries.filter(e => e.level === 'DEBUG').length;
     const errorRate = totalEntries > 0 ? (errorCount / totalEntries) * 100 : 0;
 
+    // Calculate time range
+    const timestamps = entries.map(e => new Date(e.timestamp)).sort((a, b) => a.getTime() - b.getTime());
+    const timeRange = {
+      start: timestamps.length > 0 ? timestamps[0].toISOString() : new Date().toISOString(),
+      end: timestamps.length > 0 ? timestamps[timestamps.length - 1].toISOString() : new Date().toISOString()
+    };
+
+    // Calculate top errors
+    const errorMessages = entries.filter(e => e.level === 'ERROR').map(e => e.message);
+    const errorCounts: { [key: string]: number } = {};
+    errorMessages.forEach(msg => {
+      const simplified = msg.toLowerCase().split(' ').slice(0, 5).join(' ');
+      errorCounts[simplified] = (errorCounts[simplified] || 0) + 1;
+    });
+    const topErrors = Object.entries(errorCounts)
+      .map(([message, count]) => ({ message, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
     return {
       totalEntries,
       errorCount,
@@ -244,6 +276,9 @@ class LogParser {
       infoCount,
       debugCount,
       errorRate,
+      timeRange,
+      topErrors,
+      timeSeriesData: this.generateTimeSeriesData(entries),
       timelineData: this.generateTimelineData(entries),
       hourlyDistribution: this.generateHourlyDistribution(entries),
       logLevelData: [
@@ -254,6 +289,29 @@ class LogParser {
       ],
       insights: this.generateInsights(entries)
     };
+  }
+
+  private generateTimeSeriesData(entries: LogEntry[]) {
+    const timeGroups: { [key: string]: { errorCount: number; warningCount: number; infoCount: number } } = {};
+    
+    entries.forEach(entry => {
+      const hour = new Date(entry.timestamp);
+      hour.setMinutes(0, 0, 0); // Round to hour
+      const timeKey = hour.toISOString();
+      
+      if (!timeGroups[timeKey]) {
+        timeGroups[timeKey] = { errorCount: 0, warningCount: 0, infoCount: 0 };
+      }
+      
+      if (entry.level === 'ERROR') timeGroups[timeKey].errorCount++;
+      if (entry.level === 'WARN') timeGroups[timeKey].warningCount++;
+      if (entry.level === 'INFO') timeGroups[timeKey].infoCount++;
+    });
+
+    return Object.entries(timeGroups).map(([timestamp, data]) => ({
+      timestamp,
+      ...data
+    })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }
 
   private generateTimelineData(entries: LogEntry[]) {
