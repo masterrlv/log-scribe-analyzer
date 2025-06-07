@@ -1,15 +1,48 @@
 
 import { Link } from "react-router-dom";
-import { Upload, BarChart3, FileText } from "lucide-react";
+import { Upload, BarChart3, FileText, User, LogOut, History } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "../components/ui/button";
 
 const Index = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
       <header className="bg-slate-800 border-b border-slate-700">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-blue-400">Log Analyzer</h1>
-          <p className="text-slate-300 mt-1">Intelligent server log analysis and insights</p>
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-blue-400">Log Analyzer</h1>
+            <p className="text-slate-300 mt-1">Intelligent server log analysis and insights</p>
+          </div>
+          
+          {/* Auth Section */}
+          <div className="flex items-center gap-4">
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">Welcome, {user.username}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Link 
+                to="/auth" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Login / Register
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
@@ -57,20 +90,41 @@ const Index = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link 
-            to="/upload" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
-          >
-            <Upload className="w-5 h-5" />
-            Upload Log File
-          </Link>
-          <Link 
-            to="/analyze" 
-            className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 border border-slate-600"
-          >
-            <BarChart3 className="w-5 h-5" />
-            View Demo Analysis
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to="/upload" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
+              >
+                <Upload className="w-5 h-5" />
+                Upload Log File
+              </Link>
+              <Link 
+                to="/history" 
+                className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 border border-slate-600"
+              >
+                <History className="w-5 h-5" />
+                View History
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link 
+                to="/auth" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
+              >
+                <User className="w-5 h-5" />
+                Login to Upload
+              </Link>
+              <Link 
+                to="/analyze" 
+                className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 border border-slate-600"
+              >
+                <BarChart3 className="w-5 h-5" />
+                View Demo Analysis
+              </Link>
+            </>
+          )}
         </div>
       </main>
 

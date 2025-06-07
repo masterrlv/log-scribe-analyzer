@@ -3,6 +3,8 @@ import { useState, useRef } from "react";
 import { Upload, FileText, Loader2 } from "lucide-react";
 import { logParser } from "../services/logParser";
 import { useLogContext } from "../contexts/LogContext";
+import { useAuth } from "../contexts/AuthContext";
+import { fileStorage } from "../services/fileStorage";
 
 interface FileUploaderProps {
   onFileUpload: (file: File) => void;
@@ -14,6 +16,7 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setLogData } = useLogContext();
+  const { user, isAuthenticated } = useAuth();
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -36,6 +39,11 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
   };
 
   const handleFileSelection = async (file: File) => {
+    if (!isAuthenticated || !user) {
+      alert('Please log in to upload files');
+      return;
+    }
+
     // Validate file type
     const validTypes = ['.log', '.txt'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -65,8 +73,23 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
       // Analyze the log entries
       const analysis = logParser.analyzeLogEntries(logEntries);
       console.log('Log analysis:', analysis);
+
+      // Prepare analysis data for storage
+      const analysisData = {
+        totalEntries: analysis.totalEntries,
+        errorCount: analysis.errorCount,
+        warningCount: analysis.warningCount,
+        infoCount: analysis.infoCount,
+        timeRange: analysis.timeRange,
+        topErrors: analysis.topErrors,
+        timeSeriesData: analysis.timeSeriesData || []
+      };
       
-      // Store in context
+      // Save file to storage
+      const storedFile = fileStorage.saveFile(file, analysisData, user.id);
+      console.log('File saved to storage:', storedFile);
+      
+      // Store in context for immediate use
       setLogData(logEntries, analysis, file.name);
       
       // Notify parent component
@@ -86,6 +109,19 @@ const FileUploader = ({ onFileUpload, isProcessing, setIsProcessing }: FileUploa
       handleFileSelection(files[0]);
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-12">
+        <FileText className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold mb-2">Authentication Required</h3>
+        <p className="text-slate-400 mb-4">Please log in to upload and analyze log files.</p>
+        <a href="/auth" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+          Go to Login
+        </a>
+      </div>
+    );
+  }
 
   if (isProcessing) {
     return (
